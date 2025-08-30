@@ -116,7 +116,46 @@ vectorstore = PineconeVectorStore.from_documents(
     documents=pdf_splitter,
     # These two were already defined outside of our post method 
     embedding=embeddings,
-    # Vector Store expects an Index Object not a string
-    index=pc.Index(INDEX_NAME)
+    index=INDEX_NAME
 )
 ```
+
+### 08/29
+
+**Testing PDF Submission**
+- Run up our Flask Service 
+- Postman POST request on our endpoint
+- Send a file and check pinecone vectorized database
+
+**Setting up Flask**
+
+`set FLASK_APP=handbook_microservice.main:app`
+
+---
+
+`flask run`
+
+**OpenAI API KEY**
+
+> The problem here is that we must export or have an OpenAI API key in our environment 
+>
+> so we just need to go to [Open AI](https://platform.openai.com/api-keys) then grab a secret key from there 
+>
+> You may need to add some credits to begin the playground
+
+
+**POSTMAN**
+
+> To test we just need to send a **form-data** with a key of `file` type: File with our pdf 
+>
+> Send the POST request to this endpoint
+>
+
+**ERROR: Vector dimension 1536 does not match the dimension of the index 512**
+- You have to make sure your Pinecone dimensions match with your OpenAI embedding
+- Since the embedding cannot change or support **512** you could create a new Pinecone index with a **1536** dimension 
+  - Be sure to keep the model as is: `text-embedding-3-small`
+
+**Progress**
+
+> We have successfully **split, embedded and ingested** our pdf document

@@ -24,25 +24,35 @@ class Upload(Resource):
         This View will handle posting PDF to our Pinecone Vectorized Database for embeddings 
     """
     def post(self):
-        pdf_file = request.files['file']
+        try:
+            pdf_file = request.files['file']
 
-        # Need a package to convert pdf_file into a readable python object
-        pdf_read = fitz.open(stream=pdf_file.read(), filetype='pdf')    # We're using PyMuPDF to open and read our pdf_file
+            # Need a package to convert pdf_file into a readable python object
+            pdf_read = fitz.open(stream=pdf_file.read(), filetype='pdf')    # We're using PyMuPDF to open and read our pdf_file
 
-        # Text object
-        text = ''
-        for page in pdf_read:
-            text += page.get_text()
+            # Text object
+            text = ''
+            for page in pdf_read:
+                text += page.get_text()
 
-        # Prepping text for our vector store
-        splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
-        pdf_splitter = splitter.create_documents([text])
-        
-        # Store in Pinecone 
-        vectorstore = PineconeVectorStore.from_documents(
-            documents=pdf_splitter, 
-            embedding=embeddings, 
-            index_name=pc.Index(INDEX_NAME))
+            # Prepping text for our vector store
+            splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+            pdf_splitter = splitter.create_documents([text])
+            
+            # Store in Pinecone 
+            vectorstore = PineconeVectorStore.from_documents(
+                documents=pdf_splitter, 
+                embedding=embeddings, 
+                index_name=INDEX_NAME)
+            
+            return {
+                "message": "Document uplaoded successfully."
+            }, 200
+        except Exception as e:
+            return {
+                "message": "Upload to Pinecone failed.",
+                "error": str(e)
+            }, 500
 
 
 api.add_resource(Upload, '/uploads')
