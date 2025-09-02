@@ -159,3 +159,89 @@ vectorstore = PineconeVectorStore.from_documents(
 **Progress**
 
 > We have successfully **split, embedded and ingested** our pdf document
+
+### 09/02
+
+**Query Pinecone - Endpoint**
+1) Use OpenAI to convert question to embedding
+2) Query Pinecone with embedding 
+3) Use LLM to Answer the question based on context (embeddings from Pinecone )
+
+**Question to Embedding**
+
+*Establish an OpenAI Client*
+```py
+from openai import OpenAI 
+
+# Input your key for OpenAI 
+client = OpenAI(api_key='my_api_key')
+
+# Fetch your question in Resource 
+class LLM(Resource):
+    def post(self):
+        resp = request.get_json()
+        q = resp['question']
+
+# Changing question into embedding via OpenAI 
+def post(self):
+    ....
+    q_embedding = client.embeddings.create(
+        # Be sure to have the same embedding model as your Pinecone DB
+        model='text-embedding-3-small',
+        input = q
+    )
+```
+
+
+*Querying from Pinecone*
+```py
+pc = Pinecone(api_key='my_pinecone_api_key')
+index = pc.Index('MY_INDEX_NAME')
+
+pinecone_query = index.query(
+    # Response object so we need to access the embedding key
+    vector = q_embedding.data[0].embedding,
+    # Change this top 5 for different results
+    top_k = 5
+    include_metadata = True
+)
+```
+
+*Building Context for LLM*
+```py
+# Queries has the "matches" key so we just loop through all the matches 
+#
+# Then find the text within metadata 
+matches = [m["metadata"]["text"] for m in pinecone_query['matches']]
+
+# Convert list to string for our prompt 
+matches_str = "\n\n".join(matches)
+```
+
+*Creating our LLM Prompt* 
+```py
+# Passing in the Pinecone Query + RAW Question from our user 
+prompt = f"""
+You are an assistant with access to the following context from a document:
+
+{matches_str}
+
+Answer the question based only on the above context.
+Question: {question}
+"""
+```
+
+*Using OpenAI LLM*
+```py
+llm_resp = client.chat.completions.create(
+    model='gpt-4o-mini',
+    messages={'role':'user', 'content':prompt}
+)
+
+# Returning the text 
+print(llm_resp.choices[0].message.content)
+```
+
+### Demo 
+
+<img src='rag_pipeline.gif' >
