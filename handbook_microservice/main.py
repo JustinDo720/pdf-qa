@@ -7,10 +7,17 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
 from openai import OpenAI
+from flask_cors import CORS
 
 # Initialize our app 
 app = Flask(__name__)
 api = Api(app)
+
+# CORS for React-Frontend UI 
+REACT_ENDPOINT = 'http://localhost:3000'
+CORS(app, resources={
+    "/question": {"origins": REACT_ENDPOINT}
+})
 
 # Adding some Pinecone configs before running our application 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")

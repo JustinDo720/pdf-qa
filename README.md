@@ -245,3 +245,32 @@ print(llm_resp.choices[0].message.content)
 ### Demo 
 
 <img src='rag_pipeline.gif' >
+
+
+### 09/03
+
+**Created Frontend**
+- need *flask cors* to allow frontend service to send requests to our microservice 
+
+`pip install flask-cors`
+
+**Import Cors**
+
+```py
+from flask_cors import CORS 
+
+app = Flask(__name__)
+CORS(app)
+```
+
+We want to **whitelist** a certain domain to a specific resource:
+
+```py
+CORS(app, resources = {
+    "/question": {"origins": REACT_ENDPOINT}
+})
+```
+- The **key** is our endpoint and the **value** contains our url
+
+
+<img src='rag_pipeline_ui.gif'>
